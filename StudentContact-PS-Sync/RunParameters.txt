@@ -1,0 +1,25 @@
+How to launch StudentContact-PS-Sync from the command prompt.
+
+Here is an example providing all the parameters:
+StudentContact-PS-Sync.exe 
+  --mockRun=true 
+  --useReprocess=false
+  --showDebugStatements=false
+  --basePath="C:\MyData\Repos\2025-03-13\RycorData"
+  --studentContactFileName="ContactUpdateFormSubmitted(Feb23).csv"
+
+Here is an example of providing the base path and the name of the csv file to run with: 
+StudentContact-PS-Sync.exe --basepath="C:\MyData\Repos\2025-03-13\RycorData" --studentcontactfilename="ContactUpdateFormSubmitted(Feb23).csv"
+For this run, defaults for the missing parameters were used. 
+  --mockRun=true, means changes will not be submitted; instead of clicking the submit button, the cancel button is clicked. 
+  --useReprocess=false, means for this run the reprocess file will not be used.
+  --showDebugStatements=false, means that no debug statements will be written to the console.
+
+
+Here is an example of providing the base path and the name of the csv file to run with: 
+StudentContact-PS-Sync.exe --mockRun=false --basepath="C:\MyData\Repos\2025-03-13\RycorData" --studentcontactfilename="ContactUpdateFormSubmitted(Feb23).csv"
+For this run, defaults for the missing parameters were used. 
+  --mockRun=false, means changes will submitted. 
+  --useReprocess=false, means for this run, the reprocess file will not be used.
+  --showDebugStatements=false, means that no debug statements will be written to the console.
+  
