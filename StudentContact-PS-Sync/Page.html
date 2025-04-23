@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+
+
+    <details onclick="detailsNavController.clickHandler(this)" role="menu" aria-haspopup="true" aria-controls="navStudentProfileSection_menu">
+        <summary id="navStudentProfileSection" data-custom-info="sortOrder: 100" tabindex="0">
+            <span>Student Profile</span>
+        </summary>
+        <div class="fly-out-container" id="navStudentProfileSection_menu" aria-labelledby="navStudentProfileSection" style="width: 440px; height: 630px; top: 172px; visibility: visible;">
+            <div id="close_navStudentProfileSection" class="back">
+                <a href="javascript:;" onclick="detailsNavController.closeSubmenu(navStudentProfileSection)">Main Menu</a>
+            </div>
+            <div class="subcategory">
+                <h3>
+                    <span id="navStudentStudentDetails" data-custom-info="sortOrder: 100, parentHTMLID: navStudentProfileSection">Student Details</span>
+                </h3>
+                <ul aria-labelledby="navStudentStudentDetails" role="group">
+                    <li class=" app-link">
+                        <a href="/admin/students/quicklookup.html?frn=0014213" id="navQuickLookup" data-custom-info="sortOrder: 100, parentHTMLID: navStudentStudentDetails" target="_parent" role="menuitem">
+                            <span>Quick Lookup</span>
+                        </a>
+                    </li>
+                    <li class=" app-link"><a href="/admin/students/addresses.html?frn=0014213" id="navStudentAddresses" data-custom-info="sortOrder: 200, parentHTMLID: navStudentStudentDetails" target="_parent" role="menuitem"><span>Addresses</span></a></li>
+                    <li class=" app-link"><a href="/admin/students/generaldemographics.html?frn=0014213" id="navStudentDemographics" data-custom-info="sortOrder: 300, parentHTMLID: navStudentStudentDetails" target="_parent" role="menuitem"><span>Demographics</span></a></li>
+                    <li class=" app-link"><a href="/admin/students/emailconfig.html?frn=0014213" id="navStudentEmail" data-custom-info="sortOrder: 400, parentHTMLID: navStudentStudentDetails" target="_parent" role="menuitem"><span>Email</span></a></li>
+                    <li class=" app-link"><a href="/admin/students/modifydata.html?frn=0014213" id="navStudentModifyInfo" data-custom-info="sortOrder: 500, parentHTMLID: navStudentStudentDetails" target="_parent" role="menuitem"><span>Modify Info</span></a></li>
+                    <li class=" app-link"><a href="/admin/students/misc.html?frn=0014213" id="navStudentOtherInfo" data-custom-info="sortOrder: 600, parentHTMLID: navStudentStudentDetails" target="_parent" role="menuitem"><span>Other Info</span></a></li>
+                    <li class=" app-link"><a href="/admin/students/photo.html?frn=0014213" id="navStudentPhoto" data-custom-info="sortOrder: 700, parentHTMLID: navStudentStudentDetails" target="_parent" role="menuitem"><span>Student Photo</span></a></li>
+                </ul>
+            </div><div class="subcategory"><h3><span id="navStudentContactsSection" data-custom-info="sortOrder: 200, parentHTMLID: navStudentProfileSection">Contacts</span></h3><ul aria-labelledby="navStudentContactsSection" role="group"><li class=" app-link"><a href="/admin/students/fmly_Index.html?frn=0014213" id="navStudentAssociatedFamilyMembers" data-custom-info="sortOrder: 100, parentHTMLID: navStudentContactsSection" target="_parent" role="menuitem"><span>Associated Family Members</span></a></li><li class=" app-link"><a href="/admin/students/contacts.html?frn=0014213" id="navStudentContactManagement" data-custom-info="sortOrder: 200, parentHTMLID: navStudentContactsSection" target="_parent" role="menuitem"><span>Contact Management</span></a></li><li class=" app-link"><a href="/admin/students/parentsguardian.html?frn=0014213" id="navStudentGuardians" data-custom-info="sortOrder: 300, parentHTMLID: navStudentContactsSection" target="_parent" role="menuitem"><span>Guardian Info</span></a></li></ul></div><div class="subcategory"><h3><span id="navStudentUserAccess" data-custom-info="sortOrder: 300, parentHTMLID: navStudentProfileSection">User Access</span></h3><ul aria-labelledby="navStudentUserAccess" role="group"><li class=" app-link"><a href="/admin/students/parentaccess.html?frn=0014213" id="navStudentAccessHistory" data-custom-info="sortOrder: 100, parentHTMLID: navStudentUserAccess" target="_parent" role="menuitem"><span>Access History</span></a></li></ul></div><div class="subcategory"><h3><span id="navStudentProfileMore" data-custom-info="sortOrder: 400, parentHTMLID: navStudentProfileSection">More</span></h3><ul aria-labelledby="navStudentProfileMore" role="group"><li class=" app-link"><a href="/admin/students/studentattachments.html?frn=0014213" id="navStudentAttachments" data-custom-info="sortOrder: 100, parentHTMLID: navStudentProfileMore" target="_parent" role="menuitem"><span>Attachments</span></a></li><li class=" app-link"><a href="/admin/students/lunch.html?frn=0014213" id="navStudentLunchProgram" data-custom-info="sortOrder: 300, parentHTMLID: navStudentProfileMore" target="_parent" role="menuitem"><span>Lunch Program</span></a></li><li class=" app-link"><a href="/admin/students/transportation.html?frn=0014213" id="navStudentTransportation" data-custom-info="sortOrder: 400, parentHTMLID: navStudentProfileMore" target="_parent" role="menuitem"><span>Transportation</span></a></li></ul></div>
+        </div>
+    </details>
+
+
+
+    <table _ngcontent-ng-c3414090939="" class="district students_8">
+        <colgroup _ngcontent-ng-c3414090939="">
+            <!---->
+            <col _ngcontent-ng-c3414090939="">
+            <col _ngcontent-ng-c3414090939="">
+            <col _ngcontent-ng-c3414090939="">
+            <col _ngcontent-ng-c3414090939=""><!---->
+            <col _ngcontent-ng-c3414090939=""><!---->
+        </colgroup>
+        <tbody _ngcontent-ng-c3414090939="">
+            <tr _ngcontent-ng-c3414090939="">
+                <!---->
+                <td _ngcontent-ng-c3414090939="" class="left">
+                    <!----><a _ngcontent-ng-c3414090939="" id="student_selection_lnk4213" target="" href="/admin/students/home.html?frn=0014213">Vadnala, Sreshta</a><!----><!---->
+                </td>
+                <td _ngcontent-ng-c3414090939="" class="center"><!----><!---->100945 <span _ngcontent-ng-c3414090939=""></span><!----><!----></td>
+                <td _ngcontent-ng-c3414090939="" class="center"><!----><!---->1 <span _ngcontent-ng-c3414090939=""></span><!----><!----></td>
+                <td _ngcontent-ng-c3414090939="" class="center"><!----><!---->05/18/2018 <span _ngcontent-ng-c3414090939=""></span><!----><!----></td><!---->
+                <td _ngcontent-ng-c3414090939="" class="center">SEE</td><!---->
+                <td _ngcontent-ng-c3414090939="" class="center metaHR" id="metaField1_4213">313816548</td>
+                <td _ngcontent-ng-c3414090939="" class="center metaHR" id="metaField2_4213"></td>
+                <td _ngcontent-ng-c3414090939="" class="center metaHR" id="metaField3_4213"></td>
+            </tr><!---->
+        </tbody>
+    </table>
+
+
+    <pds-icon name="chevron-left" class="x-scope pds-icon-0 pds-widget" pds-widget="pds-widget">
+        <template is="dom-if" class="style-scope pds-icon">
+        </template>
+
+        <svg aria-hidden="true" focusable="false" class="pds-icon-chevron-left pds-icon-svg  style-scope pds-icon">
+            <use xlink:href="#pds-svg-chevron-left" class="style-scope pds-icon"></use>
+        </svg>
+    </pds-icon>
+</body>
+</html>

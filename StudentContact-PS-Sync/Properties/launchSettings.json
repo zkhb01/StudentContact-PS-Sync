@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "StudentContact-PS-Sync": {
+      "commandName": "Project",
+      "commandLineArgs": "mockRun"
+    }
+  }
+}
