@@ -2,25 +2,18 @@
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-using System;
+using System.IO;
 using System.Text;
 
 namespace StudentContact_PS_Sync
 {
     public class PsWebDriver
     {
-        private string originalWindow { get; set; }
         public string logFilePath;
         public bool isMockRun;
-        public PsWebDriver(string basePath,  bool isMockRun) {
-            driver = new ChromeDriver();
-            // Remove implicit wait (optional, since we'll use explicit waits)
-            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(0);
-            originalWindow = "";
-            this.logFilePath = basePath + $"log_{DateTime.Now.ToString("yyyy-MM-dd_HHmmss")}.txt";
-            this.isMockRun = isMockRun;
-        }
-
+        public bool showDebugStatements;
+        public IWebDriver driver;
+        private string originalWindow { get; set; }
         private int waitSeconds = 2;
         private string adminUser = "srv_psro@ffca-calgary.com";
         private string adminPassword = "Pj&^MTAE(bR#$B=7:/?6CU\"Hk";
@@ -28,9 +21,17 @@ namespace StudentContact_PS_Sync
         private string adminWritePassword = "e?Cn%YPQcE=Ek7qv!qVzm%hCLz";
         private string psUrl = "https://ffca.powerschool.com/admin/";
         private string psHomeUrl = "home.html?searchtype=students";
-        public IWebDriver driver;
-        private bool first = true;
         private bool goReadOnly = false;
+        private bool first = true;
+
+        public PsWebDriver(string basePath,  bool isMockRun, bool showDebugStatements) {
+            driver = new ChromeDriver();
+            originalWindow = "";
+            this.logFilePath = basePath + $"log_{DateTime.Now.ToString("yyyy-MM-dd_HHmmss")}.txt";
+            this.isMockRun = isMockRun;
+            this.showDebugStatements = showDebugStatements;
+        }
+
 
         public string Title {  get { return driver.Title;  } }
 
@@ -166,7 +167,7 @@ namespace StudentContact_PS_Sync
             }
             catch (Exception ex)
             {
-                Log("Error: " + ex.Message);
+                Log("### Error: " + ex.Message);
                 Log("Current URL: " + driver.Url);
                 Log("Page Source: " + driver.PageSource);
                 Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
@@ -180,7 +181,7 @@ namespace StudentContact_PS_Sync
             WebDriverWait wait8 = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
         }
 
-        public bool FindStudentOnStudentSearchPage(string studentNumber)
+        public bool FindStudentOnStudentSearchPage(string campus, string studentNumber)
         {
             try
             {
@@ -199,11 +200,11 @@ namespace StudentContact_PS_Sync
 
                 // Get the class attribute
                 string classAttribute = filterDiv.GetAttribute("class");
-                Console.WriteLine($"Class attribute: '{classAttribute}'");
+                //Console.WriteLine($"Class attribute: '{classAttribute}'");
 
                 // Check if showFilters is present
                 bool isVisible = classAttribute.Contains("showFilters");
-                Console.WriteLine(isVisible ? "Buttons are visible (showFilters present)." : "Buttons are hidden (showFilters absent).");
+                //Console.WriteLine(isVisible ? "Buttons are visible (showFilters present)." : "Buttons are hidden (showFilters absent).");
 
                 if (isVisible)
                 {
@@ -242,30 +243,7 @@ namespace StudentContact_PS_Sync
                 bool noResultsFound = false;
                 try
                 {
-                //    var feedbackElement = wait.Until(drv =>
-                //    {
-                //        var elements = drv.FindElements(By.Id("searchFeedbackStudent"));
-                //        if (elements.Count > 0 && elements[0].Displayed)
-                //        {
-                //            string text = elements[0].Text.Trim();
-                //            Log($"Feedback found: '{text}'");
-                //            return elements[0];
-                //        }
-                //        return null; // Keep waiting
-                //    });
-                //    noResultsFound = feedbackElement.Text.Trim().Contains("There are no search results");
-                //}
-                //catch (NoSuchElementException)
-                //{
-                //    Log("No 'searchFeedbackStudent' found - assuming results exist.");
-                //    noResultsFound = false;
-                //}
-                //catch (WebDriverTimeoutException)
-                //{
-                //    Log("No 'searchFeedbackStudent' found - assuming results exist.");
-                //    noResultsFound = false;
-                //}
-                                Thread.Sleep(500); // Small delay to ensure it's in view (use sparingly)
+                    Thread.Sleep(500); // Small delay to ensure it's in view (use sparingly)
 
                     var headerElement = wait.Until(drv =>
                     {
@@ -280,7 +258,7 @@ namespace StudentContact_PS_Sync
                 }
                 catch (WebDriverTimeoutException)
                 {
-                    Log("Neither element found - unexpected state.");
+                    Log("### Neither element found - unexpected state.");
                     noResultsFound = true;
                 }
 
@@ -288,30 +266,30 @@ namespace StudentContact_PS_Sync
                 first = false;
                 if (noResultsFound)
                 {
-                    Log($"No Student exists with ASN: {studentNumber}");
+                    Log($"Campus: {campus}, No Student exists with ASN: {studentNumber}");
                     return false;
                 }
                 return true;
             }
             catch (StaleElementReferenceException ex)
             {
-                Log($"Element stale: {ex.Message}");
+                Log($"### Element stale: {ex.Message}");
 //                Log("Page source at failure: " + driver.PageSource);
                 return false;
             }
             catch (NoSuchElementException ex)
             {
-                Log($"Element not found: {ex.Message}");
+                Log($"### Element not found: {ex.Message}");
                 return false;
             }
             catch (WebDriverTimeoutException ex)
             {
-                Log("Timed out waiting for search outcome.");
+                Log("### Timed out waiting for search outcome.");
                 return false;
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}");
+                Log($"### An error occurred: {ex.Message}, {ex.GetType().FullName}");
                 return false;
             }
 
@@ -351,13 +329,15 @@ namespace StudentContact_PS_Sync
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}");
+                Log($"### An error occurred: {ex.Message}, {ex.GetType().FullName}");
                 return false;
             }
         }
 
+
+
         // SHould be at the page with the various student data including the address section
-        public bool GoToStudentCompliantAddressPage(string stateStudentId, string currAddr, string street, string city, string state, string zip, DateTime? effectiveDate)
+        public bool GoToStudentCompliantAddressPage(string campus, string stateStudentNumber, string currAddr, string street, string city, string state, string zip, DateTime? effectiveDate)
         {
             try
             {
@@ -377,7 +357,7 @@ namespace StudentContact_PS_Sync
                     {
                         expandBtn.Click();
                         // in expanded table find row with current address
-                        string currStreet = currAddr.Split(',')[0].Trim();
+                        string prevCsvStreet = currAddr.Split(',')[0].Trim();
                         // Wait for the address table to appear
                         wait.Until(d => d.FindElement(By.XPath("//table[@ng-show='addressList.length > 0']")).Displayed);
 
@@ -385,26 +365,51 @@ namespace StudentContact_PS_Sync
                         var trs = driver.FindElements(By.XPath("//table[@ng-show='addressList.length > 0']/tbody/tr")).Skip(1);
                         StringBuilder allStreetText = new StringBuilder();
 
-                        var currStreetText = StringUtil.AbbreviateStreet(currStreet.Trim()).ToLower();
+                        var currStreetText = StringUtil.AbbreviateStreet(prevCsvStreet.Trim()).ToLower();
+                        var updatedCsvStreet = StringUtil.AbbreviateStreet(street.Trim()).ToLower();
+                        IWebElement? firstRow = null;
+                        string psStreet = "";
                         foreach (var row in trs)
                         {
+                            if (firstRow == null) firstRow = row;
                             // Find the Street <td> (3rd column based on header order)
                             var streetTd = row.FindElements(By.TagName("td"))[2]; // Index 2 for "Street"
-                            string streetText = StringUtil.AbbreviateStreet(streetTd.Text.Trim()).ToLower();
-
-                            if (streetText == currStreetText)
+                            psStreet = StringUtil.AbbreviateStreet(streetTd.Text.Trim()).ToLower();
+                            if (psStreet == updatedCsvStreet)  // PS street = new csv street then update this row
+                            {
+                                Log($"# New street: '{updatedCsvStreet}' already matched a PS street: '{psStreet}'");
+                                // Find and click EditAddress in this row
+                                IWebElement editAddressLink = wait.Until(ExpectedConditions.ElementToBeClickable(
+                                    row.FindElement(By.Id("EditAddress"))
+                                ));
+                                editAddressLink.Click();
+                                Log($"Clicked EditAddress for street: {psStreet}");
+                                return true;
+                            }
+                            if (psStreet == currStreetText)  // ps street = original street in csv then update this row
                             {
                                 // Find and click EditAddress in this row
                                 IWebElement editAddressLink = wait.Until(ExpectedConditions.ElementToBeClickable(
                                     row.FindElement(By.Id("EditAddress"))
                                 ));
                                 editAddressLink.Click();
-                                Log($"Clicked EditAddress for street: {streetText}");
+                                Log($"Clicked EditAddress for street: {psStreet}");
                                 return true;
                             }
-                            allStreetText.Append($"\r\n\"{streetText}\"");
+                            allStreetText.Append($"\r\n\"{psStreet}\"");
                         }
-                        Log($"Unmatched CurrentAddress: StateStudentId: {stateStudentId}, CurrentAddress: {currAddr}, NewAddress: {street}, {city}, {state}, {zip}, \r\nList of Streets compared to \"{currStreetText}\": {allStreetText.ToString()}", false);
+                        if (trs.Count() == 2 && firstRow != null && psStreet != "")   // replace existing address to new csv address
+                        {
+                            // Find and click EditAddress in this row
+                            IWebElement editAddressLink = wait.Until(ExpectedConditions.ElementToBeClickable(
+                                firstRow.FindElement(By.Id("EditAddress"))
+                            ));
+                            editAddressLink.Click();
+                            Log($"Clicked EditAddress for street: {psStreet}");
+                            return true;
+
+                        }
+                        Log($"## Campus: {campus}, Unmatched CurrentAddress: StateStudentNumber: {stateStudentNumber}, CurrentAddress: {currAddr}, NewAddress: {street}, {city}, {state}, {zip}, \r\nList of Streets compared to \"{currStreetText}\": {allStreetText.ToString()}");
                         return false;
                     }
                 }
@@ -439,14 +444,13 @@ namespace StudentContact_PS_Sync
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}");
-                Log(ex.StackTrace);
+                Log(ex);
                 return false;
             }
         }
 
         // From the Contact Details page, find the address that needs to change in the list and click the button to edit it
-        public bool GoToContactDetailsAddressPage(string stateStudentId, string relationship, string currAddr, string unit, string street, string city, string state, string zip)
+        public bool GoToContactDetailsAddressPage(string campus, string stateStudentNumber, string relationship, string currAddr, string unit, string street, string city, string state, string zip)
         {
             try
             {
@@ -475,31 +479,71 @@ namespace StudentContact_PS_Sync
                     {
                         expandBtn.Click();
                         // in expanded table find row with current address
-                        string currStreet = currAddr.Split(',')[0].Trim();
+                        string prevCsvStreet = currAddr.Split(',')[0].Trim();
                         // Wait for the address table to appear
                         wait.Until(d => d.FindElement(By.XPath("//table[@ng-show='addressList.length > 0']")).Displayed);
 
                           // Find all rows in the address table (skip header)
                         var trs = driver.FindElements(By.XPath("//table[@ng-show='addressList.length > 0']/tbody/tr")).Skip(1);
+                        StringBuilder allStreetText = new StringBuilder();
 
+                        var currStreetText = StringUtil.AbbreviateStreet(prevCsvStreet.Trim()).ToLower();
+                        var updatedCsvStreet = StringUtil.AbbreviateStreet(street.Trim()).ToLower();
+
+                        IWebElement? firstRow = null;
+                        string psStreet = "";
                         foreach (var row in trs)
                         {
+                            if (firstRow == null) firstRow = row;
                             // Find the Street <td> (3rd column based on header order)
                             var streetTd = row.FindElements(By.TagName("td"))[2]; // Index 2 for "Street"
                             string streetText = streetTd.Text.Trim();
-
-                            if (streetText == currStreet)
+                            psStreet = StringUtil.AbbreviateStreet(streetTd.Text.Trim()).ToLower();
+                            if (psStreet == updatedCsvStreet)  // PS street = new csv street then update this row
+                            {
+                                Log($"# New street: '{updatedCsvStreet}' already matched a PS street: '{psStreet}'");
+                                // Find and click EditAddress in this row
+                                IWebElement editAddressLink = wait.Until(ExpectedConditions.ElementToBeClickable(
+                                    row.FindElement(By.Id("EditAddress"))
+                                ));
+                                editAddressLink.Click();
+                                Log($"Clicked EditAddress for street: {psStreet}");
+                                return true;
+                            }
+                            if (psStreet == currStreetText)  // ps street = original street in csv then update this row
                             {
                                 // Find and click EditAddress in this row
                                 IWebElement editAddressLink = wait.Until(ExpectedConditions.ElementToBeClickable(
                                     row.FindElement(By.Id("EditAddress"))
                                 ));
                                 editAddressLink.Click();
-                                Log($"Clicked EditAddress for street: {streetText}");
+                                Log($"Clicked EditAddress for street: {psStreet}");
                                 return true;
                             }
+                            allStreetText.Append($"\r\n\"{psStreet}\"");
+
+                            //if (streetText == currStreet)
+                            //{
+                            //    // Find and click EditAddress in this row
+                            //    IWebElement editAddressLink = wait.Until(ExpectedConditions.ElementToBeClickable(
+                            //        row.FindElement(By.Id("EditAddress"))
+                            //    ));
+                            //    editAddressLink.Click();
+                            //    Log($"Clicked EditAddress for street: {streetText}");
+                            //    return true;
+                            //}
                         }
-                        Log($"UnmatchCurrentAddress: StateStudentId: {stateStudentId}, CurrentAddress: {currAddr}, NewAddress: {street}, {city}, {state}, {zip}, {unit}", false);
+                        if (trs.Count() == 2 && firstRow != null && psStreet != "")   // replace existing address to new csv address
+                        {
+                            // Find and click EditAddress in this row
+                            IWebElement editAddressLink = wait.Until(ExpectedConditions.ElementToBeClickable(
+                                firstRow.FindElement(By.Id("EditAddress"))
+                            ));
+                            editAddressLink.Click();
+                            Log($"Clicked EditAddress for street: {psStreet}");
+                            return true;
+                        }
+                        Log($"## Campus: {campus}, Unmatched CurrentAddress: StateStudentNumber: {stateStudentNumber}, CurrentAddress: {currAddr}, NewAddress: {street}, {city}, {state}, {zip}, \r\nList of Streets compared to \"{currStreetText}\": {allStreetText.ToString()}");
                         return false;
                     }
                 }
@@ -520,9 +564,16 @@ namespace StudentContact_PS_Sync
 
 
                     if (rowCount < 2)
-                    {
-                        Log($"No Powerschool addresses for student: {stateStudentId} {relationship} ");
-                        return false;
+                    {  // try again
+                        table = wait.Until(ExpectedConditions.ElementExists(By.Id("physical-address-table")));
+                        Log("Physical address table found again.");
+                        rows = table.FindElements(By.XPath(".//tbody/tr"));
+                        rowCount = rows.Count;
+                        if (rowCount < 2)
+                        {
+                            Log($"# Campus: {campus}, Seleniun found only {rowCount} rows into Powerschool address table after 1 retry for student: {stateStudentNumber} {relationship}");
+                            return false;
+                        }
                     }
                     int maxRetries = 3; // Number of retries
                     int retryDelayMs = 1000; // 1 second delay between retries
@@ -545,20 +596,19 @@ namespace StudentContact_PS_Sync
                         Log("Edit button clicked for Address row!");
                         return true; 
                     }
-                    return false;
+                    throw new Exception("Less than 3 columns on address table");
                 }
-                return false;
+                throw new Exception("Expand button found but not preocessed");
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}", false);
-                Log(ex.StackTrace);
+                Log(ex);
                 throw;
             }
         }
 
         // From the Contact Details page, find the address that needs to change in the list and click the button to edit it
-        public bool GoToContactDetailsEmailPage(string stateStudentId, string relationship, string current)
+        public bool GoToContactDetailsEmailPage(string stateStudentNumber, string relationship, string current)
         {
             try
             {
@@ -567,152 +617,111 @@ namespace StudentContact_PS_Sync
                 // Then wait for it to be visible
                 wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//form[@id='contactform']//table[@id='email-address-table']")));
 
-                IWebElement expandBtn = null;  // uncomment if multiple emails exist and table needs to be expanded via expandBtn
-                //try
-                //{
-                //    expandBtn = driver.FindElement(By.XPath("//a[@ng-show='addressList.length > 1']"));
-                //    if ((expandBtn.Displayed && expandBtn.Enabled ? expandBtn : null) == null)
-                //        expandBtn = null;
-                //    else
-                //    {
-                //        expandBtn.Click();
-                //        // in expanded table find row with current address
-                //        string currStreet = currAddr.Split(',')[0].Trim();
-                //        // Wait for the address table to appear
-                //        wait.Until(d => d.FindElement(By.XPath("//table[@ng-show='addressList.length > 0']")).Displayed);
-
-                //        // Find all rows in the address table (skip header)
-                //        var trs = driver.FindElements(By.XPath("//table[@ng-show='addressList.length > 0']/tbody/tr")).Skip(1);
-
-                //        foreach (var row in trs)
-                //        {
-                //            // Find the Street <td> (3rd column based on header order)
-                //            var streetTd = row.FindElements(By.TagName("td"))[2]; // Index 2 for "Street"
-                //            string streetText = streetTd.Text.Trim();
-
-                //            if (streetText == currStreet)
-                //            {
-                //                // Find and click EditAddress in this row
-                //                IWebElement editAddressLink = wait.Until(ExpectedConditions.ElementToBeClickable(
-                //                    row.FindElement(By.Id("EditAddress"))
-                //                ));
-                //                editAddressLink.Click();
-                //                Log($"Clicked EditAddress for street: {streetText}");
-                //                return true;
-                //            }
-                //        }
-                //        Log($"UnmatchCurrentAddress: StateStudentId: {stateStudentId}, CurrentAddress: {currAddr}, NewAddress: {street}, {city}, {state}, {zip}, {unit}", false);
-                //        return false;
-                //    }
-                //}
-                //catch (OpenQA.Selenium.NoSuchElementException)
-                //{
-                //    Log("no expand button");
-                //}
-
-                if (expandBtn == null)
+                // Get all rows within tbody (exclude header row with <th>)
+                var table = wait.Until(ExpectedConditions.ElementExists(By.Id("email-address-table")));
+                var rows = table.FindElements(By.XPath(".//tbody/tr"));
+                if (rows.Count() < 2)
                 {
-                    int maxRetries = 3; // Number of retries
-                    int retryDelayMs = 1000; // 1 second delay between retries
-                    IWebElement editEmailBtn = null;
+                    Log($"# No emails in PowerSchool for student {stateStudentNumber} {relationship}, attempting to click on Add Email button");
 
-                    for (int attempt = 0; attempt < maxRetries; attempt++)
+                    var addEmailBtn = wait.Until(drv =>
                     {
-                        try
-                        {
-                            // Locate the button (no need to wait for clickability)
-                            editEmailBtn = wait.Until(drv =>
-                            {
-                                try
-                                {
-                                    var elem = drv.FindElement(By.Id("edit-email-button-0"));
-                                    return elem.Displayed && elem.Enabled ? elem : null;
-                                }
-                                catch (NoSuchElementException)
-                                {
-                                    return null;
-                                }
-                            });
-
-                            // Click via JavaScript
-                            IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
-                            js.ExecuteScript("arguments[0].click();", editEmailBtn);
-                            Console.WriteLine("Clicked Edit Email button via JavaScript.");
-                            return true;
-
-                            //-----------------------
-                            editEmailBtn = wait.Until(drv =>
-                            {
-                                try
-                                {
-                                    var elem = drv.FindElement(By.Id("edit-email-button-0"));
-                                    return elem.Displayed && elem.Enabled ? elem : null;
-                                }
-                                catch (NoSuchElementException)
-                                {
-                                    return null; // Keep retrying within wait.Until
-                                }
-                            });
-                            //---------------------
-                            break; // Success, exit loop
-                        }
-                        catch (WebDriverTimeoutException ex)
-                        {
-                            Log($"Attempt {attempt + 1}/{maxRetries} failed: {ex.Message}");
-                            if (attempt == maxRetries - 1)
-                            {
-                                throw new Exception("Failed to find edit-email-button-0 after all retries", ex);
-                            }
-                            Thread.Sleep(retryDelayMs); // Wait before next attempt
-                        }
-                    }
-
-                    if (editEmailBtn == null)
-                    {
-                        editEmailBtn = wait.Until(drv =>
-                        {
-                            var elem = drv.FindElement(By.Id("add-email-button")); //KHB - not sure on Id or if this button exists
-                            return elem.Displayed && elem.Enabled ? elem : null;
-                        });
-                    }
-                    editEmailBtn.Click();
+                        var elem = drv.FindElement(By.Id("add-email-button"));
+                        return elem.Displayed && elem.Enabled ? elem : null;
+                    });
+                    addEmailBtn.Click();
                     return true;
                 }
-                return false;
+
+                foreach (var row in rows.Skip(1)) // skip header row
+                {
+                    // Get all <td> elements in the row
+                    var cells = row.FindElements(By.TagName("td"));
+                    if (cells.Count >= 2) // Ensure there’s at least 2 <td>s
+                    {
+                        var actionCell = cells[3];
+                        var editButton = actionCell.FindElement(By.XPath(".//button[@aria-label='Edit']"));
+
+                        // Wait for the overlay to disappear
+                        wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.XPath("//img[@class='stoplight-symbol']")));
+                        Log("Overlay cleared.");
+
+                        // Ensure button is clickable
+                        wait.Until(ExpectedConditions.ElementToBeClickable(editButton));
+                        Log("Edit button is clickable.");
+
+                        // Scroll into view (optional)
+                        ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", editButton);
+
+                        // Attempt regular click
+                        try
+                        {
+                            editButton.Click();
+                            Log("Edit button clicked normally!");
+                        }
+                        catch (ElementClickInterceptedException)
+                        {
+                            ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", editButton);
+                            Log("Edit button clicked via JavaScript!");
+                        }
+                        Log($"Edit button clicked for email row!");
+                        return true; // Stop after clicking the first match
+                    }
+                }
+                throw new Exception("### Unable to find an email row with an Edit button to click");
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}", false);
-                Log(ex.StackTrace);
+                Log(ex);
                 throw;
             }
         }
 
         // From the Contact Details page, find the phone that needs to change in the list and click the button to edit it
-        public bool GoToContactDetailsPhonePage(string stateStudentId, string relationship, string phone, string phoneType)
+        public bool GoToContactDetailsPhonePage(string campus, string stateStudentNumber, string relationship, string phone, string phoneType)
         {
             try
             {
                 WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
 
                 // Then wait for it to be visible
+                //wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//form[@id='contactform']//table[@id='phone-number-table']")));
+
+                //// Get all rows within tbody (exclude header row with <th>)
+                //var table = wait.Until(ExpectedConditions.ElementExists(By.Id("phone-number-table")));
+                //var rows = table.FindElements(By.XPath(".//tbody/tr"));
+                // Wait for table to be visible
+
                 wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//form[@id='contactform']//table[@id='phone-number-table']")));
+                Log("Phone table visible.");
 
-                // Wait for the address table to appear
-                //wait.Until(d => d.FindElement(By.XPath("//table[@ng-show='addressList.length > 0']")).Displayed);
-
-                // Find all rows in the address table (skip header)
-                //var trs = driver.FindElements(By.XPath("//table[@ng-show='addressList.length > 0']/tbody/tr")).Skip(1);
-
-                //----
-                // Get all rows within tbody (exclude header row with <th>)
-                var table = wait.Until(ExpectedConditions.ElementExists(By.Id("phone-number-table")));
-                var rows = table.FindElements(By.XPath(".//tbody/tr"));
-                if (rows.Count() < 2  )
+                // Wait for data rows to load (at least one <tr> with <td>)
+                var table = wait.Until(drv =>
                 {
-                    Log($"no phones in PowerSchool for student {stateStudentId} {relationship}", false);
-                    return false;
-                }
+                    var tbl = drv.FindElement(By.Id("phone-number-table"));
+                    var dataRows = tbl.FindElements(By.XPath(".//tbody/tr[td]"));
+                    return dataRows.Any() ? tbl : null; // Retry until data rows appear
+                });
+                Log("Table has data rows.");
+
+
+                // Wait for row count to stabilize (Angular rendering complete)
+                int previousCount = 0;
+                var rows = wait.Until(drv =>
+                {
+                    var currentRows = table.FindElements(By.XPath(".//tbody/tr"));
+                    int currentCount = currentRows.Count;
+                    if (currentCount > previousCount && currentCount > 1) // More than just header
+                    {
+                        previousCount = currentCount;
+                        Thread.Sleep(500); // Brief pause to check if more rows load
+                        var newRows = table.FindElements(By.XPath(".//tbody/tr"));
+                        return newRows.Count == currentCount ? newRows : null; // Stable if count doesn’t change
+                    }
+                    return null; // Retry if not enough rows or still growing
+                });
+                Log($"Table fully loaded with {rows.Count} rows (including header).");
+
                 foreach (var row in rows.Skip(1)) // skip header row
                 {
                     // Get all <td> elements in the row
@@ -727,7 +736,7 @@ namespace StudentContact_PS_Sync
                             {
                                 if (FormatPhoneNumber(span.Text.Trim()) == FormatPhoneNumber(phone))
                                 {
-                                    Log($"Found '{phone}' in row: {row.GetAttribute("id")}");
+                                    Log($"# Found '{phone}' in row: {row.GetAttribute("id")}");
                                     // Click Edit button in 6th <td> (index 5)
                                     var actionCell = cells[5];
                                     var editButton = actionCell.FindElement(By.XPath(".//button[@aria-label='Edit']"));
@@ -738,7 +747,7 @@ namespace StudentContact_PS_Sync
 
                                     // Ensure button is clickable
                                     wait.Until(ExpectedConditions.ElementToBeClickable(editButton));
-                                    Log("Edit button is clickable.");
+                                    Log("# Edit button is clickable.");
 
                                     // Scroll into view (optional)
                                     ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", editButton);
@@ -747,12 +756,12 @@ namespace StudentContact_PS_Sync
                                     try
                                     {
                                         editButton.Click();
-                                        Log("Edit button clicked normally!");
+                                        Log("# Edit button clicked normally!");
                                     }
                                     catch (ElementClickInterceptedException)
                                     {
                                         ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", editButton);
-                                        Log("Edit button clicked via JavaScript!");
+                                        Log("# Edit button clicked via JavaScript!");
                                     }
                                     Log($"Edit button clicked for {phone} row!");
                                     return true; // Stop after clicking the first match
@@ -762,12 +771,19 @@ namespace StudentContact_PS_Sync
                         else 
                         {
                             var typeCell = cells[1]; // Second <td> for Type
-                            var spans = typeCell.FindElements(By.TagName("span"));
+                            var spans = wait.Until(drv =>
+                            {
+                                var spanElements = typeCell.FindElements(By.TagName("span"));
+                                return spanElements.Any() ? spanElements : null; // Wait.Until will retry if no spans
+                            });
+
+
+                            //var spans = typeCell.FindElements(By.TagName("span"));
                             foreach (var span in spans)
                             {
                                 if (span.Text.Trim() == phoneType)
                                 {
-                                    Log($"Found '{phoneType}' in row: {row.GetAttribute("id")}");
+                                    Log($"# Found '{phoneType}' in row: {row.GetAttribute("id")}");
                                     // Click Edit button in 6th <td> (index 5)
                                     var actionCell = cells[5];
                                     var editButton = actionCell.FindElement(By.XPath(".//button[@aria-label='Edit']"));
@@ -778,7 +794,7 @@ namespace StudentContact_PS_Sync
 
                                     // Ensure button is clickable
                                     wait.Until(ExpectedConditions.ElementToBeClickable(editButton));
-                                    Log("Edit button is clickable.");
+                                    Log("# Edit button is clickable.");
 
                                     // Scroll into view (optional)
                                     ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", editButton);
@@ -787,12 +803,12 @@ namespace StudentContact_PS_Sync
                                     try
                                     {
                                         editButton.Click();
-                                        Log("Edit button clicked normally!");
+                                        Log("# Edit button clicked normally!");
                                     }
                                     catch (ElementClickInterceptedException)
                                     {
                                         ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", editButton);
-                                        Log("Edit button clicked via JavaScript!");
+                                        Log("# Edit button clicked via JavaScript!");
                                     }
                                     Log($"Edit button clicked for {phoneType} row!");
                                     return true; // Stop after clicking the first match
@@ -803,35 +819,36 @@ namespace StudentContact_PS_Sync
                     }
                 }
 
-                if (string.IsNullOrWhiteSpace(phoneType))
+                if (rows.Count() < 2)
+                    Log($"# Campus: {campus}, No phones in PowerSchool for student {stateStudentNumber} {relationship}. Adding it.");
+                else if (string.IsNullOrWhiteSpace(phoneType))
                     Log($"No '{phoneType}' phone type found in the phone table. Trying to add it");
                 else
-                    Log($"No '{phone}' with no phone type found in the phone table. trying to add as Mobile");
+                    Log($"No '{phone}' with no phone type found in the phone table. trying to add as {phoneType}");
+
                 // add this phone
                 // Locate the Add Phone button
-                IWebElement addPhoneButton = wait.Until(ExpectedConditions.ElementExists(
+                IWebElement addPhoneButton = wait.Until(ExpectedConditions.ElementToBeClickable(
                     By.Id("add-phone-button")
                 ));
 
                 // Click via JavaScript
                 IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
                 js.ExecuteScript("arguments[0].click();", addPhoneButton);
-                Console.WriteLine("Clicked the Add Phone button via JavaScript.");
-
+                //Console.WriteLine("Clicked the Add Phone button via JavaScript.");
 
                 return true;
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}", false);
-                Log(ex.StackTrace);
+                Log(ex);
                 throw;
             }
         }
 
         // bring up the student's contact in studentContactsTable using First & Last name & Relationship
         //    if First & Last name match, but PS has no Relationship, use it.
-        public bool GoToContactDetailsPage(string contactFirstName, string contactLastName, string relationship)
+        public bool GoToContactDetailsPage(string campus, string stateStudentNumber, string relationship, string contactFirstName, string contactLastName)
         {
             try
             {
@@ -927,26 +944,25 @@ namespace StudentContact_PS_Sync
                 }
                 else
                 {
-                    Log($"No link found for {contactFirstName} {contactLastName} with relationship: \"{relationship}\" \r\nCompared {contactName} with: {allNames}");
+                    Log($"## Campus: {campus}, StateStudentNumber: {stateStudentNumber}, No student contacts found for {contactFirstName} {contactLastName} with relationship: \"{relationship}\" \r\nCompared {contactName} with: {allNames}");
                     return false;
                 }
                 return true;
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}");
-                Log(ex.StackTrace);
+                Log(ex);
                 throw;
             }
         }
 
 
-        public void EnterContactAddress(string recordId, string streetLine1, string streetLine2, string unit, string city, string state, string zip)
+        public bool EnterContactAddress(string recordId, string streetLine1, string streetLine2, string unit, string city, string state, string zip)
         {
             string validAddress = "not validating yet";
             try
             {
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
 
                 IWebElement addressType = wait.Until(drv =>
                 {
@@ -959,15 +975,16 @@ namespace StudentContact_PS_Sync
                 SelectElement selectat = new SelectElement(addressType);
                 selectat.SelectByText("Mailing");
 
-
+                var csvStreet = StringUtil.AbbreviateWholeString(StripOutStreet(streetLine1));
                 IWebElement streeta = wait.Until(drv =>
                 {
                     // Locate the textarea
                     var elem = drv.FindElement(By.Id("physical-address-line1-input")); // id = "physical-address-line1-input" and id="physical-address-line2-input" and id="physical-address-unit-input" 
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
+                Log($"# Replacing '{streeta.GetAttribute("value")}' with '{csvStreet}'");
                 streeta.Clear();
-                streeta.SendKeys(StringUtil.AbbreviateWholeString(StripOutStreet(streetLine1)));
+                streeta.SendKeys(csvStreet);
 
                 IWebElement streetb = wait.Until(drv =>
                 {
@@ -1002,7 +1019,7 @@ namespace StudentContact_PS_Sync
                     var elem = drv.FindElement(By.Id("physical-address-country-input"));
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
-                //  id="physical-address-country-input" <option label="Canada (CA)" value="CA" selected="selected">Canada (CA)</option>
+
                 // Use SelectElement to interact with the dropdown
                 SelectElement selectcn = new SelectElement(country);
                 //selectcn.SelectByValue("string:CA");
@@ -1037,42 +1054,6 @@ namespace StudentContact_PS_Sync
                 effdt.Clear();
                 effdt.SendKeys(today);
 
-                /*
-                // address validator popups up here
-                var validateButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//button[text()='Validate']")));
-                validateButton.Click();
-
-                // Wait for dialog to appear
-
-                wait.Until(ExpectedConditions.ElementExists(By.XPath("//div[@role='dialog' and contains(@class, 'MuiDialog-paper')]")));
-                var dialog = driver.FindElement(By.XPath("//div[@role='dialog' and contains(@class, 'MuiDialog-paper')]"));
-                Log("Dialog HTML: " + dialog.GetAttribute("outerHTML"));
-
-
-                var acceptButtons = wait.Until(drv =>
-                {
-                    var elem = drv.FindElements(By.XPath("//div[@role='dialog' and contains(@class, 'MuiDialog-paper')]//button[text()='Accept']"));
-                    return elem;
-                });
-
-                //var acceptButtons = driver.FindElements(By.XPath("//div[@role='dialog' and contains(@class, 'MuiDialog-paper')]//button[text()='Accept']"));
-                Log($"total accept buttons: {acceptButtons.Count.ToString()}");
-                if (acceptButtons.Count > 0 && acceptButtons[0].Enabled)
-                {
-                    acceptButtons[0].Click();
-                    Log("Accept clicked!");
-                    validAddress = "valid";
-                }
-                else
-                {
-                    var cancelButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//div[@role='dialog' and contains(@class, 'MuiDialog-paper')]//button[text()='Cancel']")));
-                    Log($"Invalid address for: {recordId}, {streetLine1}, {city}, {state}, {zip}");
-                    cancelButton.Click();
-                    Log("Cancel clicked!");
-                    validAddress = "invalid";
-                }
-                */
-
                 if (isMockRun)
                 {
                     IWebElement cancel = wait.Until(drv =>
@@ -1083,7 +1064,7 @@ namespace StudentContact_PS_Sync
                     });
                     cancel.Click();
                     Thread.Sleep(1000);
-                    return;
+                    return true;
                 }
                 IWebElement sub = wait.Until(drv =>
                 {
@@ -1092,27 +1073,21 @@ namespace StudentContact_PS_Sync
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
                 sub.Click();
-                return;
- 
-
-
+                return true;
             }
             catch (Exception ex)
             {
                 Log($"validation ended with {validAddress}");
-                Log(ex.Message);
-                Log(ex.StackTrace);
-                throw;
+                Log(ex);
+                throw ex;
             }
         }
 
-        public void EnterContactEmail(string recordId, string email, bool isPrimary, string type)
+        public bool EnterContactEmail(string recordId, string email, bool isPrimary, string type, ref bool emailChanged)
         {
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
             try
             {
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-                //Thread.Sleep(1000);
-                // Switch to new tab
                 wait.Until(d => d.WindowHandles.Count > 1);
                 string originalWindow = driver.CurrentWindowHandle;
                 driver.SwitchTo().Window(driver.WindowHandles.Last());
@@ -1120,7 +1095,7 @@ namespace StudentContact_PS_Sync
 
                 // Wait for basic page load
                 wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").Equals("complete"));
-                Log("Tab DOM loaded.");
+                Log("New tab fully loaded.");
 
                 // Wait for email-type-input to exist in the DOM
                 wait.Until(d => d.FindElements(By.Id("email-type-input")).Count > 0);
@@ -1136,7 +1111,7 @@ namespace StudentContact_PS_Sync
                     }
                     catch (NoSuchElementException)
                     {
-                        return null; // Retry if not found
+                        return null; // Wait.Until will retry if not found
                     }
                 });
 
@@ -1161,6 +1136,10 @@ namespace StudentContact_PS_Sync
                     var elem = drv.FindElement(By.Id("email-address-input"));
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
+                Log($"# Replacing '{emailtd.GetAttribute("value")}' with '{email}'");
+                // save the existing value and compare with the Email/UserName in the Web Account Access section (table) and is the same update these as well
+                if (email.Trim().ToLower() != emailtd.GetAttribute("value").Trim().ToLower())
+                    emailChanged = true;
                 emailtd.Clear();
                 emailtd.SendKeys(email.Trim().ToLower());
 
@@ -1170,7 +1149,7 @@ namespace StudentContact_PS_Sync
                 bool isChecked = checkbox.Selected;
                 if (isPrimary != isChecked)
                     checkbox.Click();
-                Console.WriteLine("Checkbox clicked!");
+                //Console.WriteLine("Checkbox clicked!");
 
 
                 if (isMockRun)
@@ -1182,7 +1161,7 @@ namespace StudentContact_PS_Sync
                         return elem.Displayed && elem.Enabled ? elem : null;
                     });
                     cancel.Click();
-                    return;
+                    return true;
                 }
 
                 IWebElement sub = wait.Until(drv =>
@@ -1192,18 +1171,26 @@ namespace StudentContact_PS_Sync
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
                 sub.Click();
+                return true;
             }
             catch (Exception ex)
             {
-                Log(ex.Message);
-                Log(ex.StackTrace);
-                throw;
+                //Log($"### An error occurred: {ex.Message}, {ex.GetType().FullName}");
+                Log(ex);
+                IWebElement closeButton = wait.Until(ExpectedConditions.ElementToBeClickable(
+                    By.ClassName("ui-dialog-titlebar-close")
+                ));
+
+                // Click the button
+                closeButton.Click();
+                //Console.WriteLine("Clicked the Close Dialog button to facilitate retry.");
+                throw ex;
             }
         }
 
         public bool EnterContactPhone(string recordId, string phone, bool acceptsText, bool isPreferred, string type)
         {
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
             try
             {
                 wait.Until(d => d.WindowHandles.Count > 1);
@@ -1234,6 +1221,7 @@ namespace StudentContact_PS_Sync
                     var elem = drv.FindElement(By.Id("phone-number-input"));
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
+                Log($"# Replacing '{phonetd.GetAttribute("value")}' with '{phone}'");
                 phonetd.Clear();
                 phonetd.SendKeys(FormatPhoneNumber(phone.Trim()));
 
@@ -1250,7 +1238,7 @@ namespace StudentContact_PS_Sync
                 bool isPreferredChecked = prefrredCheckbox.Selected;
                 if (isPreferred != isPreferredChecked)
                     prefrredCheckbox.Click();
-                Console.WriteLine("Checkbox clicked!");
+                //Console.WriteLine("Checkbox clicked!");
 
 
                 if (isMockRun)
@@ -1265,10 +1253,11 @@ namespace StudentContact_PS_Sync
                     return true;
                 }
 
+                // Locate and click Submit
                 IWebElement sub = wait.Until(drv =>
                 {
                     // Locate the dropdown
-                    var elem = drv.FindElement(By.Id("phonel-panel-save-button"));
+                    var elem = drv.FindElement(By.Id("phone-panel-save-button"));
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
                 sub.Click();
@@ -1276,24 +1265,117 @@ namespace StudentContact_PS_Sync
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}");
+                Log(ex);
                 IWebElement closeButton = wait.Until(ExpectedConditions.ElementToBeClickable(
                     By.ClassName("ui-dialog-titlebar-close")
                 ));
 
                 // Click the button
                 closeButton.Click();
-                Console.WriteLine("Clicked the Close Dialog button to facilitate retry.");
-                return false;
+                Log("Clicked the Close Dialog button to facilitate retry.");
+                Thread.Sleep(3000);
+                throw ex;
             }
         }
 
+        public bool UpdateUserNameIfNeeded(string recordId, string email)
+        {
+            // goto Web Account Access table and pull the Username and Account Email column values
+            string username = string.Empty;
+            string accountEmail = string.Empty;
+            // Find the Username value
+            username = driver.FindElement(By.XPath("//td[@id='web-account-user-name']/span")).Text;
 
-        public void EnterEditAddress(string street, string city, string state, string zip, DateTime? effectiveDate)
+            // Find the Account Email value
+            accountEmail = driver.FindElement(By.XPath("//td[@id='web-account-email']/span")).Text;
+
+
+
+            if (username != email || accountEmail != email)
+            {
+                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+                // Wait for the stoplight image to disappear
+                try
+                {
+                    wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.InvisibilityOfElementLocated(By.CssSelector("img.stoplight")));
+                    Log("Stoplight overlay disappeared.");
+                }
+                catch (WebDriverTimeoutException)
+                {
+                    Log("Warning: Stoplight overlay did not disappear within 20 seconds. Attempting to proceed.");
+                }
+
+                // Wait for the Edit Account button to be clickable
+                var editButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.Id("edit-account-button")));
+
+                // Log button state for debugging
+                Log($"Button displayed: {editButton.Displayed}, enabled: {editButton.Enabled}");
+
+                // Attempt to click the button
+                try
+                {
+                    editButton.Click();
+                    Log("Edit Account button clicked successfully.");
+                }
+                catch (ElementClickInterceptedException ex)
+                {
+                    Log("Click intercepted: " + ex.Message);
+                    // Take a screenshot for debugging
+                    var screenshot = ((ITakesScreenshot)driver).GetScreenshot();
+                    screenshot.SaveAsFile("click_intercepted.png");
+
+                    // Fallback: Use JavaScript to click
+                    Log("Attempting JavaScript click as fallback.");
+                    ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", editButton);
+                    Log("Edit Account button clicked via JavaScript.");
+                }
+
+                // click Edit Account button
+                if (username != email)
+                {
+                    var usernameField = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("web-account-username-input")));
+
+                    // Clear the existing value and enter a new username
+                    usernameField.Clear();
+                    usernameField.SendKeys(email);
+                    Log($"# Username for {recordId} updated successfully from '{username}' to '{email}'.");
+                }
+
+                if (accountEmail != email)
+                {
+                    var emailField = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.Id("web-account-recovery-email-input")));
+
+                    // Clear the existing value and enter a new recovery email
+                    emailField.Clear();
+                    emailField.SendKeys(email);
+                    Log($"# Account Email for {recordId} updated successfully from '{accountEmail}' to '{email}'.");
+                }
+
+                if (isMockRun)
+                {
+                    // Wait for the Cancel button to be clickable
+                    var cancelButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.Id("email-panel-cancel-button")));
+                    cancelButton.Click();
+                    Log("Cancel button clicked successfully.");
+                }
+                else
+                {
+                    // Wait for the Submit button to be clickable
+                    var submitButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(By.Id("email-panel-save-button")));
+                    submitButton.Click();
+                    Log("Submit button clicked successfully.");
+                }
+
+
+            }
+            return true;
+        }
+
+        public bool EnterEditAddress(string street, string city, string state, string zip, DateTime? effectiveDate)
         {
             try
             {
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
 
                 IWebElement addressType = wait.Until(drv =>
                 {
@@ -1317,14 +1399,16 @@ namespace StudentContact_PS_Sync
                 SelectElement selectaf = new SelectElement(addressFormat);
                 selectaf.SelectByValue("string:Mail-CA");
 
+                var csvStreet = StringUtil.AbbreviateStreet(StripOutStreet(street));
                 IWebElement streeta = wait.Until(drv =>
                 {
                     // Locate the textarea
                     var elem = drv.FindElement(By.XPath("//textarea[@ng-model='addressData.street']")); // id = "physical-address-line1-input" and id="physical-address-line2-input" and id="physical-address-unit-input" 
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
+                Log($"# Replacing '{streeta.GetAttribute("value")}' with '{csvStreet}'");
                 streeta.Clear();
-                streeta.SendKeys(StringUtil.AbbreviateStreet(StripOutStreet(street)));
+                streeta.SendKeys(csvStreet);
 
                 IWebElement citytb = wait.Until(drv =>
                 {
@@ -1379,7 +1463,7 @@ namespace StudentContact_PS_Sync
                     });
                     cancel.Click();
                     Thread.Sleep(1000);
-                    return; 
+                    return true; 
                 }
 
                 IWebElement sub = wait.Until(drv =>
@@ -1387,12 +1471,38 @@ namespace StudentContact_PS_Sync
                     var elem = drv.FindElement(By.Id("addressDrawerSubmit"));
                     return elem.Displayed && elem.Enabled ? elem : null;
                 });
+                
                 sub.Click();
+
+
+                // Check for validation error
+                try
+                {
+                    // Short timeout to quickly check for error
+                    wait.Timeout = TimeSpan.FromSeconds(5);
+                    bool errorPresent = wait.Until(drv =>
+                    {
+                        var errors = drv.FindElements(By.ClassName("feedback-error"));
+                        return errors.Count > 0 && errors[0].Displayed && !string.IsNullOrEmpty(errors[0].Text);
+                    });
+
+                    // Error found, click Cancel
+                    Log($"# Validation error: {driver.FindElement(By.ClassName("feedback-error")).Text}");
+                    IWebElement cancelButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("addressDrawerCancel")));
+                    cancelButton.Click();
+                    Log("Cancel clicked due to validation error.");
+                }
+                catch (WebDriverTimeoutException)
+                {
+                    // No error, assume submit succeeded and dialog closed
+                    Log("Submit succeeded, moving to next dialog.");
+                }
+
+                return true;
             }
             catch (Exception ex)
             {
-                Log($"An error occurred: {ex.Message}, {ex.GetType().FullName}");
-                Log(ex.StackTrace);
+                Log(ex);
                 throw;
             }
         }
@@ -1418,7 +1528,7 @@ namespace StudentContact_PS_Sync
         }
 
         // Should be at student's menu, selecting Compliance and then Compliance Demographics, clicking it
-        public void GoToStudentCompliantPage()
+        public bool GoToStudentCompliantPage()
         {
             try
             {
@@ -1438,12 +1548,13 @@ namespace StudentContact_PS_Sync
                 // find and click the Compliance Demographic link
                 var complianceDemographicLink = driver.FindElement(By.Id("navABStudentInfo"));
                 complianceDemographicLink.Click();
+                return true;
 
             }
             catch (Exception ex)
             {
-                Log(ex.Message);
-                Log(ex.StackTrace);
+                Log(ex);
+                return false;
             }
         }
 
@@ -1474,9 +1585,61 @@ namespace StudentContact_PS_Sync
             }
             catch (Exception ex)
             {
-                Log(ex.Message);
-                Log(ex.StackTrace);
+                Log(ex);
             }
+        }
+
+        public void CloseContactDetailsTab()
+        {
+            var studentTabs = 0;
+            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
+
+            // Store the original window handle (assuming you started with one tab)
+            string originalWindow = driver.CurrentWindowHandle;
+
+            // Get all window handles (tabs)
+            var allWindows = driver.WindowHandles;
+
+            foreach (var window in allWindows)
+            {
+                // Switch to the tab
+                driver.SwitchTo().Window(window);
+
+                // Check the title
+                string title = driver.Title;
+                Log($"# Current tab title: {title}");
+                if (title.Contains("Contact Management"))
+                {
+                    if (studentTabs == 0)
+                        studentTabs++;
+                    else
+                    {
+                        driver.Close();
+                        Log($"# Closed '{title}' tab.");
+                    }
+                }
+
+                else if (title == "Contact Details")
+                {
+                    // Close the tab
+                    driver.Close();
+                    Log($"# Closed '{title}' tab.");
+                }
+            }
+
+            // Switch back to the original tab (or another open tab)
+            if (driver.WindowHandles.Count > 0)
+            {
+                driver.SwitchTo().Window(driver.WindowHandles[0]); // First remaining tab
+                Log($"Switched back to tab: {driver.Title}");
+            }
+            else
+            {
+                Log("No tabs left open.");
+            }
+            return; // Stop after closing the target tab
+
+            Log("No tab with title 'Contact Details' found when trying to close Contact Details.");
         }
 
         public void CloseContactTab()
@@ -1551,15 +1714,71 @@ namespace StudentContact_PS_Sync
             return $"({areaCode}){prefix}-{lineNumber}";
         }
 
-        public void Log(string message, bool consoleOnly = true)
+        public void Log(Exception ex)
         {
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
-            string logEntry = $"{timestamp} - {message}";
-            Console.WriteLine(logEntry);
+            string logEntry = $"{timestamp} - ";
+            var details = ExceptionHelper.GetFullExceptionDetails(ex);
+            Console.WriteLine("Full Exception Messages:");
+            Console.WriteLine(logEntry + details.FullMessage);
+            Console.WriteLine("\nFull Stack Trace:");
+            Console.WriteLine(logEntry + details.FullStackTrace);
+        }
+
+        public void Log(string message)
+        {
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmmss");
+            string logEntry = $"{timestamp} - ";
+            string msgType = "";
+            var msg = message;
             try
             {
-                if (!consoleOnly)
-                    File.AppendAllText(logFilePath, logEntry + Environment.NewLine);
+                if (message.Substring(0, 1) == "#")
+                {
+                    if (message.Substring(0, 3) == "###")
+                        msgType = "Error";
+                    else if (message.Substring(0, 2) == "##")
+                    {
+                        msgType = " Warn";
+                        File.AppendAllText(logFilePath, logEntry + msg + Environment.NewLine);
+                    }
+                    else if (message.Substring(0, 3) == "#-#")
+                    {
+                        msgType = " Info";
+                    }
+                    else if (message.Substring(0, 3) == "#+#")
+                    {
+                        msgType = " Info";
+                    }
+                    else if (message.Substring(0, 3) == "#--")
+                    {
+                        msgType = " Info";
+                        msg = msg + "\r\n";
+                    }
+                    else if (message.Substring(0, 3) == "#++")
+                    {
+                        msgType = " Info";
+                        Console.WriteLine("\r\n" + $"{timestamp} - {msgType}: {msg}");
+                        return;
+                    }
+                    else if (message.Substring(0, 1) == "#")
+                    {
+                        msgType = " Info";
+                    }
+                }
+                else  // debug msg
+                {
+                   if (showDebugStatements)
+                    {
+                        msgType = "Debug";
+                        msg = "    " + message;
+                    }
+                   else
+                    {
+                        return;
+                    }
+                }
+                Console.WriteLine($"{timestamp} - {msgType}: {msg}");
             }
             catch (Exception ex)
             {
@@ -1567,7 +1786,7 @@ namespace StudentContact_PS_Sync
             }
         }
 
-        public void HandleSiblingAddressDialog()
+        public void HandleSiblingAddressDialog(string campus, string studentNumber)
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5)); // 5-second timeout
 
@@ -1580,13 +1799,87 @@ namespace StudentContact_PS_Sync
 
                 // If found, click it
                 submitButton.Click();
-                Console.WriteLine("Sibling address dialog found and Submit clicked.");
+                Log($"## Campus: {campus}, Sibling address dialog found and Submit clicked for {studentNumber}.");
             }
             catch (WebDriverTimeoutException)
             {
                 // Dialog didn’t appear within 5 seconds, assume no siblings
-                Console.WriteLine("No sibling address dialog detected.");
+                Log("No sibling address dialog detected.");
             }
         }
+        public void InitializeDriver()
+        {
+            if (driver == null)
+            {
+                var options = new ChromeOptions();
+                options.AddArgument("--no-sandbox");
+                options.AddArgument("--disable-dev-shm-usage");
+                driver = new ChromeDriver(options);
+                //wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(60);
+                driver.Navigate().GoToUrl(psUrl);
+                Log("WebDriver initialized.");
+            }
+            // Remove implicit wait (optional, since we'll use explicit waits)
+            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(0);
+        }
+
+        public void CleanupDriver()
+        {
+            if (driver != null)
+            {
+                try { driver.Quit(); }
+                catch { }
+                driver = null;
+                //var wait = null;
+                Log("WebDriver cleaned up.");
+            }
+        }
+
+        public class ExceptionDetails
+        {
+            public string FullMessage { get; set; }
+            public string FullStackTrace { get; set; }
+        }
+
+        public static class ExceptionHelper
+        {
+            public static ExceptionDetails GetFullExceptionDetails(Exception ex)
+            {
+                var messages = new StringBuilder();
+                var stackTraces = new StringBuilder();
+                Exception currentException = ex;
+
+                // Traverse all inner exceptions
+                while (currentException != null)
+                {
+                    // Append the current exception's message
+                    messages.AppendLine(currentException.Message);
+
+                    // Append the current exception's stack trace (if available)
+                    if (!string.IsNullOrEmpty(currentException.StackTrace))
+                    {
+                        stackTraces.AppendLine(currentException.StackTrace);
+                    }
+
+                    // Move to the inner exception
+                    currentException = currentException.InnerException;
+
+                    // Add a separator between exceptions if there's more
+                    if (currentException != null)
+                    {
+                        messages.AppendLine("--- Inner Exception ---");
+                        stackTraces.AppendLine("--- Inner Exception Stack Trace ---");
+                    }
+                }
+
+                return new ExceptionDetails
+                {
+                    FullMessage = messages.ToString().Trim(),
+                    FullStackTrace = stackTraces.ToString().Trim()
+                };
+            }
+        }
+
     }
 }

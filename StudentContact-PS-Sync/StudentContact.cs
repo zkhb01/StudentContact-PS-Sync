@@ -1,9 +1,17 @@
-﻿public class StudentContact
+﻿using CsvHelper.Configuration.Attributes;
+using StudentContact_PS_Sync;
+
+public class StudentContact
 {
+    public StudentContact() 
+    {
+        Reprocessed = false;
+    }
     // Student-related fields
     public string Campus { get; set; }              // "Campus"
     public string Status { get; set; }              // "Status"
-    public DateTime DateModified { get; set; }      // "Date Modified"
+    [TypeConverter(typeof(NullableDateTimeConverter))] 
+    public DateTime? DateModified { get; set; }      // "Date Modified"
     public DateTime? DateCompleted { get; set; }    // "Date Completed" (nullable if optional)
     public string StudentId { get; set; }           // "Student ID"
     public string LastName { get; set; }            // "Last Name"
@@ -108,4 +116,6 @@
 
     // Confirmation
     public string Q82Confirm { get; set; }          // "Q82 - confirm" (Confirmation field)
+
+    public bool Reprocessed { get; set; } 
 }
