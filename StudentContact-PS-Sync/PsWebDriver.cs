@@ -18,7 +18,7 @@ namespace StudentContact_PS_Sync
         private string adminUser = "srv_psro@ffca-calgary.com";
         private string adminPassword = "Pj&^MTAE(bR#$B=7:/?6CU\"Hk";
         private string adminWriteUser = "srv_identity5309@ffca-calgary.com";
-        private string adminWritePassword = "e?Cn%YPQcE=Ek7qv!qVzm%hCLz";
+        private string adminWritePassword = "F?Cn%YPQcE%Ek7qv!WVzm%hCLs";
         private string psUrl = "https://ffca.powerschool.com/admin/";
         private string psHomeUrl = "home.html?searchtype=students";
         private bool goReadOnly = false;

@@ -26,7 +26,7 @@
             // Step 5: Log if the email is still invalid after attempting fixes
             if (!isValid && logMethod != null)
             {
-                logMethod($"## Invalid email that cannot be fixed: {email}");
+                logMethod($"## Invalid email that cannot be fixed: '{email}'");
                 return string.Empty;
             }
 

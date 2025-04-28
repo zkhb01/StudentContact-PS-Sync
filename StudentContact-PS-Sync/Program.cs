@@ -237,10 +237,10 @@ void ProcessStudentContactFile()
                                     if (contact.Q22PG1NoUpdate == "FALSE" && !string.IsNullOrWhiteSpace(address))
                                         ProcessContactAddress(campus, stateStudentNumber, relationship, contact.Q21PG1Add, contact.Q24NewPG1Unit, address, contact.Q26PG1City, contact.Q27PG1Prov, contact.Q28PG1PC);
                                     // email
-                                    var email = EmailValidator.ValidateAndFormatEmail(contact.Q29PG1Email, webDriver.Log, out bool isValid);
-                                    if (!string.IsNullOrWhiteSpace(email))
+                                    if (!string.IsNullOrWhiteSpace(contact.Q29PG1Email))
                                     {
-                                        var isPrimary = contact.Q32Primary.Trim().ToUpper() == "TRUE";
+                                        var email = EmailValidator.ValidateAndFormatEmail(contact.Q29PG1Email, webDriver.Log, out bool isValid);
+                                        //var isPrimary = contact.Q32Primary.Trim().ToUpper() == "TRUE";
                                         ProcessStudentContactEmail(stateStudentNumber, relationship, email, true, "Current");
                                     }
                                     // first phone
@@ -249,7 +249,7 @@ void ProcessStudentContactFile()
                                     {
                                         string phoneType = DeterminePhoneType(contact.Q34Cell, contact.Q35Work, contact.Q36Home);
                                         bool acceptsText = (contact.Q37PG1Txt1.Trim().ToUpper() == "TRUE");
-                                        var isPreferred = true;
+                                        bool isPreferred = true;
                                         ProcessStudentContactPhone(campus, stateStudentNumber, relationship, phone, acceptsText, isPreferred, phoneType);
                                     }
                                     // second phone
@@ -298,9 +298,9 @@ void ProcessStudentContactFile()
                                         ProcessContactAddress(campus, stateStudentNumber, relationship, address, contact.Q58PG2Apt, address, contact.Q60PG2City, contact.Q61PG2Prov, contact.Q62PG2PC);
 
                                     // email
-                                    var email = EmailValidator.ValidateAndFormatEmail(contact.Q63PG2Email, webDriver.Log, out bool isValid);
-                                    if (!string.IsNullOrWhiteSpace(email))
+                                    if (!string.IsNullOrWhiteSpace(contact.Q63PG2Email))
                                     {
+                                        var email = EmailValidator.ValidateAndFormatEmail(contact.Q63PG2Email, webDriver.Log, out bool isValid);
                                         // hard code to primary as only 1 email allowed. 
                                         ProcessStudentContactEmail(stateStudentNumber, relationship, email, true, "Current");
                                     }
@@ -310,7 +310,7 @@ void ProcessStudentContactFile()
                                     {
                                         string phoneType = DeterminePhoneType(contact.Q68CellPG2, contact.Q69WorkPG2, contact.Q70HomePG2);
                                         bool acceptsText = (contact.Q71PG2Ph1Txt.Trim().ToUpper() == "TRUE");
-                                        var isPreferred = true;
+                                        bool isPreferred = true;
                                         ProcessStudentContactPhone(campus, stateStudentNumber, relationship, phone, acceptsText, isPreferred, phoneType);
                                     }
                                     // second phone
