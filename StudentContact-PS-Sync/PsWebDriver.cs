@@ -3,6 +3,7 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using System.IO;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 
 namespace StudentContact_PS_Sync
@@ -10,6 +11,7 @@ namespace StudentContact_PS_Sync
     public class PsWebDriver
     {
         public string logFilePath;
+        public string issueLogFilePath;
         public bool isMockRun;
         public bool showDebugStatements;
         public IWebDriver driver;
@@ -27,7 +29,8 @@ namespace StudentContact_PS_Sync
         public PsWebDriver(string basePath,  bool isMockRun, bool showDebugStatements) {
             driver = new ChromeDriver();
             originalWindow = "";
-            this.logFilePath = basePath + $"log_{DateTime.Now.ToString("yyyy-MM-dd_HHmmss")}.txt";
+            this.logFilePath = Path.Combine(basePath,  $"log_{DateTime.Now.ToString("yyyy-MM-dd_HHmmss")}.txt");
+            this.issueLogFilePath = Path.Combine(basePath,  $"Issuelog_{DateTime.Now.ToString("yyyy-MM-dd_HHmmss")}.txt");
             this.isMockRun = isMockRun;
             this.showDebugStatements = showDebugStatements;
         }
@@ -1740,7 +1743,8 @@ namespace StudentContact_PS_Sync
                     else if (message.Substring(0, 2) == "##")
                     {
                         msgType = " Warn";
-                        File.AppendAllText(logFilePath, logEntry + msg + Environment.NewLine);
+                        File.AppendAllText(issueLogFilePath, logEntry + msg + Environment.NewLine);
+                        LogBoth(logEntry + msg);
                     }
                     else if (message.Substring(0, 3) == "#-#")
                     {
@@ -1758,7 +1762,7 @@ namespace StudentContact_PS_Sync
                     else if (message.Substring(0, 3) == "#++")
                     {
                         msgType = " Info";
-                        Console.WriteLine("\r\n" + $"{timestamp} - {msgType}: {msg}");
+                        LogBoth("\r\n" + $"{timestamp} - {msgType}: {msg}");
                         return;
                     }
                     else if (message.Substring(0, 1) == "#")
@@ -1778,12 +1782,19 @@ namespace StudentContact_PS_Sync
                         return;
                     }
                 }
-                Console.WriteLine($"{timestamp} - {msgType}: {msg}");
+                LogBoth($"{timestamp} - {msgType}: {msg}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Log failure: {ex.Message}");
+                LogBoth($"Log failure: {ex.Message}");
             }
+        }
+
+        private void LogBoth(string msg)
+        {
+            Console.WriteLine($"{msg}");
+            File.AppendAllText(logFilePath, msg + Environment.NewLine);
+
         }
 
         public void HandleSiblingAddressDialog(string campus, string studentNumber)

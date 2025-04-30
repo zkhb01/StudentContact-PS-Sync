@@ -2,7 +2,7 @@
   "profiles": {
     "StudentContact-PS-Sync": {
       "commandName": "Project",
-      "commandLineArgs": "--basePath=C:\\MyData\\Repos\\2025-04-19\\RycorData --studentContactFileName=ContactUpdateFormSubmitted(Feb23).csv"
+      "commandLineArgs": "--mockRun=True --basePath=C:\\MyData\\Repos\\2025-04-19\\RycorData --studentContactFileName=ContactUpdateFormSubmitted(Feb23).csv"
     }
   }
 }
